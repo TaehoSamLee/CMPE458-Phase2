@@ -8,6 +8,7 @@
 #include "../../include/lexer.h"
 
 static int current_line = 1;
+static int current_column =1;
 static char last_token_type = 'x';
 
 // Keywords table
@@ -16,8 +17,12 @@ static struct {
     TokenType type;
 } keywords[] = {
     {"if", TOKEN_IF},
+    {"else", TOKEN_ELSE},     
     {"int", TOKEN_INT},
-    {"print", TOKEN_PRINT}
+    {"print", TOKEN_PRINT},
+    {"while", TOKEN_WHILE},    
+    {"repeat", TOKEN_REPEAT},  
+    {"until", TOKEN_UNTIL}    
 };
 
 static int is_keyword(const char* word) {
@@ -86,6 +91,9 @@ Token get_next_token(const char* input, int* pos) {
     while ((c = input[*pos]) != '\0' && (c == ' ' || c == '\n' || c == '\t')) {
         if (c == '\n') {
             current_line++;
+            current_column = 1;
+        } else {
+            current_column++;
         }
         (*pos)++;
     }
@@ -101,23 +109,28 @@ Token get_next_token(const char* input, int* pos) {
     // Handle numbers
     if (isdigit(c)) {
         int i = 0;
+        int token_column = current_column;
         do {
             token.lexeme[i++] = c;
             (*pos)++;
+            current_column++;
             c = input[*pos];
         } while (isdigit(c) && i < sizeof(token.lexeme) - 1);
 
         token.lexeme[i] = '\0';
         token.type = TOKEN_NUMBER;
+        token.column = token_column;
         return token;
     }
 
     // Handle identifiers and keywords
     if (isalpha(c) || c == '_') {
         int i = 0;
+        int token_column = current_column;
         do {
             token.lexeme[i++] = c;
             (*pos)++;
+            current_column++;
             c = input[*pos];
         } while ((isalnum(c) || c == '_') && i < sizeof(token.lexeme) - 1);
 
@@ -130,13 +143,16 @@ Token get_next_token(const char* input, int* pos) {
         } else {
             token.type = TOKEN_IDENTIFIER;
         }
+        last_token_type = token_column;
         return token;
     }
 
     // Handle operators and delimiters
+    int token_column = current_column;
     (*pos)++;
     token.lexeme[0] = c;
     token.lexeme[1] = '\0';
+    token.column = token_column;
 
     switch(c) {
         case '+': case '-': case '*': case '/':
@@ -147,8 +163,31 @@ Token get_next_token(const char* input, int* pos) {
             token.type = TOKEN_OPERATOR;
             last_token_type = 'o';
             break;
+         case '>':
+            token.type = TOKEN_OPERATOR;
+            break;
+        case '<':
+            token.type = TOKEN_OPERATOR;
+            break;
         case '=':
-            token.type = TOKEN_EQUALS;
+            if (input[*pos] == '=') {
+                (*pos)++;
+                current_column++;
+                strcpy(token.lexeme, "==");
+                token.type = TOKEN_OPERATOR;
+            } else {
+                token.type = TOKEN_EQUALS;
+            }
+            break;
+        case '!':
+            if (input[*pos] == '=') {
+                (*pos)++;
+                current_column++;
+                strcpy(token.lexeme, "!=");
+                token.type = TOKEN_OPERATOR;
+            } else {
+                token.error = ERROR_INVALID_CHAR;
+            }
             break;
         case ';':
             token.type = TOKEN_SEMICOLON;

@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.embeddedhtml": "html",
+        "lexer.h": "c",
+        "parser.h": "c",
+        "tokens.h": "c"
+    }
+}

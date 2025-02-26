@@ -4,18 +4,23 @@
 
 typedef enum {
     TOKEN_EOF,
-    TOKEN_NUMBER,      // e.g., "123", "456"
-    TOKEN_OPERATOR,    // +, -, *, /
-    TOKEN_IDENTIFIER,  // Variable names
-    TOKEN_EQUALS,      // =
-    TOKEN_SEMICOLON,   // ;
-    TOKEN_LPAREN,      // (
-    TOKEN_RPAREN,      // )
-    TOKEN_LBRACE,      // {
-    TOKEN_RBRACE,      // }
-    TOKEN_IF,          // if keyword
-    TOKEN_INT,         // int keyword
-    TOKEN_PRINT,       // print keyword
+    TOKEN_NUMBER,
+    TOKEN_OPERATOR,
+    TOKEN_IDENTIFIER,
+    TOKEN_EQUALS,
+    TOKEN_SEMICOLON,
+    TOKEN_LPAREN,
+    TOKEN_RPAREN,
+    TOKEN_LBRACE,
+    TOKEN_RBRACE,
+    TOKEN_IF,
+    TOKEN_ELSE,      // Added for if-else
+    TOKEN_INT,
+    TOKEN_PRINT,
+    TOKEN_WHILE,     // Added for while loops
+    TOKEN_REPEAT,    // Added for repeat-until loops
+    TOKEN_UNTIL,     // Added for repeat-until loops
+    TOKEN_READ,      // (optional) for input operations
     TOKEN_ERROR
 } TokenType;
 
@@ -32,6 +37,7 @@ typedef struct {
     TokenType type;
     char lexeme[100];   // Actual text of the token
     int line;           // Line number in source file
+    int column;
     ErrorType error;    // Error type if any
 } Token;
 

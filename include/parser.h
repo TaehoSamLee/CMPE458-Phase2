@@ -12,6 +12,13 @@ typedef enum {
     AST_PRINT,          // Print statement
     AST_NUMBER,         // Number literal
     AST_IDENTIFIER,     // Variable name
+    AST_BINOP,          // For binary operations
+    AST_IF,             // For if statements
+    AST_ELSE,           // For else branch (or attach to AST_IF)
+    AST_WHILE,          // For while loops
+    AST_REPEAT,         // For repeat-until loops
+    AST_BLOCK,          // For block statements
+    AST_FUNC_CALL       // For function calls, e.g., factorial
     // TODO: Add more node types as needed
 } ASTNodeType;
 
@@ -21,7 +28,12 @@ typedef enum {
     PARSE_ERROR_MISSING_SEMICOLON,
     PARSE_ERROR_MISSING_IDENTIFIER,
     PARSE_ERROR_MISSING_EQUALS,
-    PARSE_ERROR_INVALID_EXPRESSION
+    PARSE_ERROR_INVALID_EXPRESSION,
+    PARSE_ERROR_MISSING_LPAREN,       // New: Missing left parenthesis
+    PARSE_ERROR_MISSING_RPAREN,       // New: Missing right parenthesis
+    PARSE_ERROR_MISSING_BLOCK,        // New: Missing '{' or '}'
+    PARSE_ERROR_INVALID_OPERATOR,     // New: Unsupported operator usage
+    PARSE_ERROR_FUNCTION_CALL_ERROR   // New: Function call issues (e.g., missing arguments)
 } ParseError;
 
 // AST Node structure
