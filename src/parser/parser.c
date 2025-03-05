@@ -169,10 +169,20 @@ static ASTNode *parse_if_statement(void) {
     ASTNode *node = create_node(AST_IF);
     advance();  // consume 'if'
     
-    expect(TOKEN_LPAREN);
-    // NEW: Use parse_bool_expression for the condition.
+    if (!match(TOKEN_LPAREN)) {
+        printf("Parse Error at line %d: Expected '(' after 'if', but found '%s'\n", current_token.line, current_token.lexeme); // CHANGED
+        synchronize();
+        exit(1);
+    }
+    advance(); // consume '('
+
     node->left = parse_bool_expression();  
-    expect(TOKEN_RPAREN);
+    if (!match(TOKEN_RPAREN)) {
+        printf("Parse Error at line %d: Expected ')' after if condition, but found '%s'\n", current_token.line, current_token.lexeme); // CHANGED
+        synchronize();
+        exit(1);
+    }
+    advance(); // consume ')'
     
     // Parse the "then" block.
     ASTNode *thenBlock = parse_block();
@@ -184,8 +194,6 @@ static ASTNode *parse_if_statement(void) {
     if (match(TOKEN_ELSE)) {
         advance(); // consume 'else'
         ASTNode *elseBlock = parse_block();
-        // You can either attach elseBlock as a sibling or in a new AST_ELSE node.
-        // Here, we attach it as the right child of the thenBlock.
         thenBlock->right = elseBlock;
     }
     return node;
@@ -195,10 +203,19 @@ static ASTNode *parse_if_statement(void) {
 static ASTNode *parse_while_statement(void) {
     ASTNode *node = create_node(AST_WHILE);
     advance();  // consume 'while'
-    expect(TOKEN_LPAREN);
-    // NEW: Use parse_bool_expression for the condition.
+    if (!match(TOKEN_LPAREN)) {
+        printf("Parse Error at line %d: Expected '(' after 'while', but found '%s'\n", current_token.line, current_token.lexeme); // CHANGED
+        synchronize();
+        exit(1);
+    }
+    advance(); // consume '('
     node->left = parse_bool_expression(); // condition
-    expect(TOKEN_RPAREN);
+    if (!match(TOKEN_RPAREN)) {
+        printf("Parse Error at line %d: Expected ')' after while condition, but found '%s'\n", current_token.line, current_token.lexeme); // CHANGED
+        synchronize();
+        exit(1);
+    }
+    advance(); // consume ')'
     node->right = parse_block();     // loop body
     return node;
 }
@@ -209,17 +226,26 @@ static ASTNode *parse_repeat_statement(void) {
     advance(); // consume 'repeat'
     node->left = parse_block(); // the block of statements
     if (!match(TOKEN_UNTIL)) {
-        parse_error(PARSE_ERROR_UNEXPECTED_TOKEN, current_token);
+        printf("Parse Error at line %d: Expected 'until' after repeat block, but found '%s'\n", current_token.line, current_token.lexeme);
         exit(1);
     }
     advance(); // consume 'until'
-    expect(TOKEN_LPAREN);
-    // NEW: Use parse_bool_expression for the condition after until.
+    if (!match(TOKEN_LPAREN)) {
+        printf("Parse Error at line %d: Expected '(' after 'until', but found '%s'\n", current_token.line, current_token.lexeme);
+        synchronize();
+        exit(1);
+    }
+    advance();
     ASTNode *condition = parse_bool_expression(); // condition after until
     node->right = condition;
-    expect(TOKEN_RPAREN);
+    if (!match(TOKEN_RPAREN)) {
+        printf("Parse Error at line %d: Expected ')' after repeat condition, but found '%s'\n", current_token.line, current_token.lexeme);
+        synchronize();
+        exit(1);
+    }
+    advance();
     if (!match(TOKEN_SEMICOLON)) {
-        parse_error(PARSE_ERROR_MISSING_SEMICOLON, current_token);
+        printf("Parse Error at line %d: Expected ';' after repeat statement, but found '%s'\n", current_token.line, current_token.lexeme);
         exit(1);
     }
     advance(); // consume ';'
@@ -232,7 +258,7 @@ static ASTNode *parse_print_statement(void) {
     advance(); // consume 'print'
     node->left = parse_expression();
     if (!match(TOKEN_SEMICOLON)) {
-        parse_error(PARSE_ERROR_MISSING_SEMICOLON, current_token);
+        printf("Parse Error at line %d: Expected ';' after print statement, but found '%s'\n", current_token.line, current_token.lexeme);
         exit(1);
     }
     advance(); // consume ';'
@@ -280,10 +306,10 @@ static ASTNode *parse_declaration(void) {
     advance(); // consume 'int'
 
     if (!match(TOKEN_IDENTIFIER)) {
-        parse_error(PARSE_ERROR_MISSING_IDENTIFIER, current_token);
+        printf("Parse Error at line %d: Expected identifier after 'int', but found '%s'\n", current_token.line, current_token.lexeme);
         exit(1);
     }
-
+    
     node->token = current_token;
     add_symbol(current_token.lexeme);
     advance();
@@ -295,14 +321,14 @@ static ASTNode *parse_declaration(void) {
     }
 
     if (!match(TOKEN_SEMICOLON)) {
-        parse_error(PARSE_ERROR_MISSING_SEMICOLON, current_token);
+        printf("Parse Error at line %d: Expected ';' at end of declaration, but found '%s'\n", current_token.line, current_token.lexeme);
         exit(1);
     }
+    
     advance();
     return node;
 }
 
-// Parse assignment: x = 5;
 static ASTNode *parse_assignment(void) {
     ASTNode *node = create_node(AST_ASSIGN);
     node->left = create_node(AST_IDENTIFIER);
@@ -310,7 +336,7 @@ static ASTNode *parse_assignment(void) {
     advance();
 
     if (!match(TOKEN_EQUALS)) {
-        parse_error(PARSE_ERROR_MISSING_EQUALS, current_token);
+        printf("Parse Error at line %d: Expected '=' after identifier in assignment, but found '%s'\n", current_token.line, current_token.lexeme);
         exit(1);
     }
     advance();
@@ -318,7 +344,7 @@ static ASTNode *parse_assignment(void) {
     node->right = parse_expression();
 
     if (!match(TOKEN_SEMICOLON)) {
-        parse_error(PARSE_ERROR_MISSING_SEMICOLON, current_token);
+        printf("Parse Error at line %d: Expected ';' after assignment, but found '%s'\n", current_token.line, current_token.lexeme);
         exit(1);
     }
     advance();
@@ -380,7 +406,7 @@ static ASTNode *parse_factor(void) {
         node = parse_expression();
         expect(TOKEN_RPAREN);
     } else {
-        printf("Syntax Error: Expected number, identifier, or '(' at line %d\n", current_token.line);
+        printf("Parse Error at line %d: Expected number, identifier, or '(' in expression, but found '%s'\n", current_token.line, current_token.lexeme);
         exit(1);
     }
     return node;
@@ -570,7 +596,7 @@ int main() {
     //Correct input
     //const char *filename = "./test/input_correct_par.txt";
     //Incorrect input
-    const char *filename = "./test/input_incorrect_par.txt";
+    const char *filename = "./test/input_incorrect_par_3.txt";
     
     FILE *file = fopen(filename, "r");
     fseek(file, 0, SEEK_END);
